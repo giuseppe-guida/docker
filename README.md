@@ -198,3 +198,10 @@ exit
 `docker rm containerid` remove a container id
 
 `docker rmi imageid` remove an imageid
+
+## Other useful commands
+
+### mount volume from interactive shell
+docker run -it -v /Users/giuseppeguida/Downloads:/data:rw centos:latest /bin/bash
+
+### ...
