@@ -1,9 +1,10 @@
 # Jupyter connected to spark locally.
 
-Run the following commands (docker container is required)
+Run the following commands (docker container is required).
+In this case the project name (and main project folder is recommender-systems)
 ```commandline
 docker pull jupyter/pyspark-notebook:latest
-docker run --rm --name local_spark -v ~/projects/work/recommender-systems:/opt/project/recommender-systems -p 8888:8888 jupyter/pyspark-notebook
+docker run --rm --name local_spark -v {path_to_your_working_dir}/recommender-systems:/opt/project/recommender-systems -p 8888:8888 jupyter/pyspark-notebook
 ```
 
 ```commandline
@@ -16,3 +17,5 @@ docker run --rm --name local_spark -v ~/projects/work/recommender-systems:/opt/p
 [C 10:01:56.086 NotebookApp]
 ```
 ![Jupyter on notebooks](assets/markdown-img-paste-20181109111528995.png)
+
+Now you can open the url http://127.0.0.1:8888/?token=64c17df16649f7b30e43fbd3bfb99d25139849a0968a5d3a (mind you, he token changes all the times)
