@@ -65,3 +65,38 @@ This is useful because multiple engines containers can be running at the same ti
 
 ## Dockerfile Directives: USER and RUN
 
+When a docker is created the command is run as root user autmatically (example docker run -itd /bin/bash)
+Ideal, create a non proviliged user.
+
+Build the folllowing image `docker build -t cenots7/nonroot:v1`
+
+```Dockerfile
+# Dockerfile based on the latest CentOS 7 image - non provileged user entry
+FROM centos:latest
+MANTAINER peppe.guida@gmail.com
+
+RUN useradd -ms /bin/bash username **
+RUN echo "this command won't fail" >> /etc/exports.list   # runs as root user
+
+RUN wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2Ftechnetwork%2Fjava%2Fjavase%2Fdownloads%2Fjdk8-downloads-2133151.html; oraclelicense=accept-securebackup-cookie;" "http://download.oracle.com/otn-pub/java/jdk/8u171-b11/512cd62ec5174c3487ac17c61aaa89e8/jdk-8u171-linux-x64.rpm"
+
+RUN yum localinstall -y ~/jdk-8u171-linux-x64.rpm # So it also picks the proper dependencies
+
+USER username  # switches to another user. From this moment the user switches and also the concept of home directory.
+
+RUN echo "this command will fail" >> /etc/exports.list   # if run here it will fail becase we havven't granted any right to do so to the username. THE ORDER OF EXECUTION MATTERS
+
+RUN cd ~ && "export JAVA_HOME=/usr/java/jdk1.8.0/jre" >> /home/user/.bashrc # This adds the env variable only for the username user. Therefore not for the root user or other users. The ENV directive helps in that case.
+
+ENV JAVA_BIN /usr/java/jdk1.8.0/jre/bin # This is equivalent to the previous command but for all users
+
+CMD echo "This command is executed at run time"
+
+ENTRYPOINT "This command will run for EVERY container that is run from it" # It always run and can't be modified by the run command, differently from the CMD that could be modified. Check this better
+```
+
+** Creates a user including the home directory (-m) and the user's login shell (-s, in this case /bin/bash). Running this cantainer wihtout this won't work! `docker run -it centos7/nonroot:v1 /bin bash` will result in the error `linux spec user unable to find the user` because the user won't be found!
+
+It's important to know that by running the docker with a specific user we can't switch to the sudo - su (the passwrod will be asked but it won't exist). This is a desired beheaviour, indeed that shouldnt' be possible when a container is deployed and distributed (the container, not the image).
+
+Connecting as super user is still possible through `docker run -u 0 -it /bin/bash`. When that happens, by running `ps aux` you'll see two /bin/bash processes running, one as root and another as username. By exiting, the docker container will still be running as username but not as root. That's also desired.
