@@ -100,3 +100,55 @@ ENTRYPOINT "This command will run for EVERY container that is run from it" # It 
 It's important to know that by running the docker with a specific user we can't switch to the sudo - su (the passwrod will be asked but it won't exist). This is a desired beheaviour, indeed that shouldnt' be possible when a container is deployed and distributed (the container, not the image).
 
 Connecting as super user is still possible through `docker run -u 0 -it /bin/bash`. When that happens, by running `ps aux` you'll see two /bin/bash processes running, one as root and another as username. By exiting, the docker container will still be running as username but not as root. That's also desired.
+
+## The EXPOSE command
+
+Use the following docker file
+```Dockerfile
+FROM centos:latest
+MAINTAINER peppe.guida@gmail.com
+
+RUN yum update -y
+RUN yum install -y httpd net-tools
+
+RUN echo "This is a custom index file build during image creation" > /var/www/html/index.html
+
+ENTRYPOINT apachectl "-DFOREGROUND" # command that runs if no other commands are passed in the `docker run -it command`. Also remember to run this docker in deamon mode otherwise the process runs in foreground.
+
+```
+
+Build the image and then run:
+```
+docker run -d --name apacheweb2 centos7/apache:v1
+docker inspect apacheweb1 | grep IPAddress
+elinks http://172.17.0.2 # at this stage the resulting page should show "This is a custom index file build during image creation" but it actaully doesn't work
+docker exec apacheweb1 /bin/cat /var/www/html/index.html
+docker stop apacheweb1
+
+let's expose the ports now
+docker run -d --name apacheweb3 -p 8080:80 centos7/apache:v1 # Not ideal, it requires me to know the dockerfile
+elinks http://localhost:8080
+```
+
+let's solve that problem
+
+```dockerfile
+FROM centos:latest
+MAINTAINER peppe.guida@gmail.com
+
+RUN yum update -y
+RUN yum install -y httpd net-tools
+
+RUN echo "This is a custom index file build during image creation" > /var/www/html/index.html
+
+EXPOSE 80
+
+ENTRYPOINT apachectl "-DFOREGROUND" # command that runs if no other commands are passed in the `docker run -it command`. Also remember to run this docker in deamon mode otherwise the process runs in foreground.
+```
+
+Now we can run the command
+```Dockerfile
+docker run -d --name apacheweb4 -P centos7/apache:v1
+```
+that
+automatically expose and remap all the ports that are exposed in the container. The host will automatically pick the first available port - look at docker ps - to check which one it is.
